@@ -1,7 +1,25 @@
 ﻿@page "/"
-
+@inject IChatAgentFactory ChatAgentFactory
+@inject IChatClientFactory ChatClientFactory
+@inject IConfiguration Configuration
+@inject IChatClientService ChatClientService
 <PageTitle>Home</PageTitle>
 
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var apiKey = Configuration["OpenRouter:ApiKey"] ??
+            throw new Exception("OpenRouter API key is not configured. Please set it in the configuration.");
+
+        var clientOptions = await ChatClientService.Get("Default") ??
+            throw new Exception("Chat client configuration not found. Please ensure it is set up correctly.");
+
+        var chatClient = ChatClientFactory.CreateInstance(apiKey, clientOptions);
+        var agent = ChatAgentFactory.CreateAgent(chatClient);
+        await base.OnInitializedAsync();
+    }
+}
