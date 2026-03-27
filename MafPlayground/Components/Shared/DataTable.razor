@@ -1,0 +1,39 @@
+<div class="card bg-base-100 shadow-sm @CssClass">
+    <div class="card-body p-0">
+        @if (IsLoading)
+        {
+            <div class="flex justify-center items-center py-16">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+        }
+        else if (IsEmpty)
+        {
+            <div class="text-center py-16 opacity-50">
+                <p class="text-lg">@EmptyTitle</p>
+                @if (!string.IsNullOrEmpty(EmptySubtitle))
+                {
+                    <p class="text-sm mt-1">@EmptySubtitle</p>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>@HeaderContent</thead>
+                    <tbody>@BodyContent</tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool IsLoading          { get; set; }
+    [Parameter] public bool IsEmpty            { get; set; }
+    [Parameter] public string EmptyTitle       { get; set; } = "No items found.";
+    [Parameter] public string? EmptySubtitle   { get; set; }
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+    [Parameter] public RenderFragment? BodyContent   { get; set; }
+    [Parameter] public string CssClass         { get; set; } = string.Empty;
+}

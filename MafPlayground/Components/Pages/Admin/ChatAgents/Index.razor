@@ -1,0 +1,367 @@
+@page "/admin/chat-agents"
+@inject IChatAgentService ChatAgentService
+
+<PageTitle>Chat Agents — Admin</PageTitle>
+
+<Toast @ref="_toast" />
+<ConfirmDeleteModal @ref="_deleteModal" EntityName="@_deleteTargetName" OnConfirm="ExecuteDelete" />
+
+<!-- Page Header -->
+<PageHeader Title="Chat Agents" Subtitle="Manage AI agent configurations and behaviors">
+    <ActionContent>
+        <Button Variant="primary" Icon="plus" CssClass="w-full sm:w-auto" OnClick="OpenCreateModal">
+            New Agent
+        </Button>
+    </ActionContent>
+</PageHeader>
+
+<!-- Table -->
+<DataTable IsLoading="_isLoading"
+              IsEmpty="@(_agents.Count == 0)"
+              EmptyTitle="No chat agents found."
+              EmptySubtitle='Click "New Agent" to create one.'>
+    <HeaderContent>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Model Id</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </HeaderContent>
+    <BodyContent>
+        @foreach (var agent in _agents)
+        {
+            <tr>
+                <td class="font-mono font-semibold">@agent.Id</td>
+                <td>@(agent.Name ?? "—")</td>
+                <td class="font-mono text-sm">@(agent.ModelId ?? "—")</td>
+                <td class="max-w-xs truncate opacity-70">@(agent.Description ?? "—")</td>
+                <td>
+                    <div class="flex gap-1">
+                        <Button Variant="ghost" Size="xs" Icon="view" Title="View"
+                                   OnClick="() => OpenDetailModal(agent)" />
+                        <Button Variant="ghost" Size="xs" Icon="edit" Title="Edit"
+                                   OnClick="() => OpenEditModal(agent)" />
+                        <Button Variant="ghost" Size="xs" Icon="delete" Title="Delete"
+                                   CssClass="text-error" OnClick="() => OpenDeleteModal(agent)" />
+                    </div>
+                </td>
+            </tr>
+        }
+    </BodyContent>
+</DataTable>
+
+<!-- Detail Modal -->
+<Modal IsOpen="_isDetailModalOpen"
+          Title="@(_selectedAgent?.Id ?? "")"
+          Subtitle="@_selectedAgent?.Name"
+          OnClose="CloseDetailModal">
+    <ChildContent>
+        @if (_selectedAgent is not null)
+        {
+            <!-- Identity Section -->
+            <DetailSection Title="Identity">
+                <DetailField Label="Id" Value="@_selectedAgent.Id" Mono="true" />
+                <DetailField Label="Name" Value="@_selectedAgent.Name" />
+                <DetailField Label="Model Id" Value="@_selectedAgent.ModelId" Mono="true" />
+                <DetailField Label="Conversation Id" Value="@_selectedAgent.ConversationId" Mono="true" />
+                @if (!string.IsNullOrWhiteSpace(_selectedAgent.Description))
+                {
+                    <DetailField Label="Description" Value="@_selectedAgent.Description" CssClass="sm:col-span-2" />
+                }
+            </DetailSection>
+
+            <!-- Sampling Parameters Section -->
+            <DetailSection Title="Sampling Parameters" ShowDivider="true"
+                              GridCols="grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+                <DetailField Label="Temperature" Value="@_selectedAgent.Temperature?.ToString("F2")" />
+                <DetailField Label="Max Output Tokens" Value="@_selectedAgent.MaxOutputTokens?.ToString()" />
+                <DetailField Label="Top P" Value="@_selectedAgent.TopP?.ToString("F3")" />
+                <DetailField Label="Top K" Value="@_selectedAgent.TopK?.ToString()" />
+                <DetailField Label="Frequency Penalty" Value="@_selectedAgent.FrequencyPenalty?.ToString("F2")" />
+                <DetailField Label="Presence Penalty" Value="@_selectedAgent.PresencePenalty?.ToString("F2")" />
+                <DetailField Label="Seed" Value="@_selectedAgent.Seed?.ToString()" />
+            </DetailSection>
+
+            <!-- Behavior Section -->
+            <DetailSection Title="Behavior" ShowDivider="true">
+                <DetailField Label="Allow Multiple Tool Calls" Value="@_selectedAgent.AllowMultipleToolCalls?.ToString()" />
+                <DetailField Label="Allow Background Responses" Value="@_selectedAgent.AllowBackgroundResponses?.ToString()" />
+            </DetailSection>
+
+            @if (_selectedAgent.StopSequences is { Count: > 0 })
+            {
+                <div class="mt-3">
+                    <span class="text-xs uppercase tracking-wide opacity-50 font-medium">Stop Sequences</span>
+                    <BadgeList Items="_selectedAgent.StopSequences" Mono="true" />
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(_selectedAgent.Instructions))
+            {
+                <DetailSection Title="Instructions" ShowDivider="true" GridCols="">
+                    <pre class="whitespace-pre-wrap text-sm font-mono bg-base-200 p-4 rounded-lg leading-relaxed max-h-48 overflow-y-auto">@_selectedAgent.Instructions</pre>
+                </DetailSection>
+            }
+        }
+    </ChildContent>
+    <FooterContent>
+        <Button Variant="ghost" OnClick="CloseDetailModal">Close</Button>
+        <Button Variant="primary" Icon="edit"
+                   OnClick="() => { CloseDetailModal(); OpenEditModal(_selectedAgent!); }">
+            Edit
+        </Button>
+    </FooterContent>
+</Modal>
+
+<!-- Create / Edit Modal -->
+<Modal IsOpen="_isModalOpen"
+          Title="@(_isEditMode ? "Edit Chat Agent" : "New Chat Agent")"
+          ShowCloseButton="false"
+          OnClose="CloseModal">
+    <ChildContent>
+        <EditForm Model="_form" OnValidSubmit="SaveAgent">
+            <DataAnnotationsValidator />
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Id -->
+                <FormField Label="Id" Required="true">
+                    <InputText class="input input-bordered" @bind-Value="_form.Id" disabled="@_isEditMode" placeholder="e.g. Default" />
+                    <ValidationMessage For="() => _form.Id" class="text-error text-xs mt-1" />
+                </FormField>
+
+                <!-- Name -->
+                <FormField Label="Name">
+                    <InputText class="input input-bordered" @bind-Value="_form.Name" placeholder="e.g. HelperBot" />
+                </FormField>
+
+                <!-- ModelId -->
+                <FormField Label="Model Id">
+                    <InputText class="input input-bordered" @bind-Value="_form.ModelId" placeholder="e.g. openai/gpt-4o" />
+                </FormField>
+
+                <!-- ConversationId -->
+                <FormField Label="Conversation Id">
+                    <InputText class="input input-bordered" @bind-Value="_form.ConversationId" />
+                </FormField>
+
+                <!-- Temperature -->
+                <FormField Label="Temperature" Hint="(0–2)">
+                    <InputNumber class="input input-bordered" @bind-Value="_form.Temperature" step="0.1" placeholder="1.0" />
+                    <ValidationMessage For="() => _form.Temperature" class="text-error text-xs mt-1" />
+                </FormField>
+
+                <!-- MaxOutputTokens -->
+                <FormField Label="Max Output Tokens">
+                    <InputNumber class="input input-bordered" @bind-Value="_form.MaxOutputTokens" placeholder="4096" />
+                    <ValidationMessage For="() => _form.MaxOutputTokens" class="text-error text-xs mt-1" />
+                </FormField>
+
+                <!-- TopP -->
+                <FormField Label="Top P" Hint="(0–1)">
+                    <InputNumber class="input input-bordered" @bind-Value="_form.TopP" step="0.05" />
+                    <ValidationMessage For="() => _form.TopP" class="text-error text-xs mt-1" />
+                </FormField>
+
+                <!-- TopK -->
+                <FormField Label="Top K">
+                    <InputNumber class="input input-bordered" @bind-Value="_form.TopK" />
+                    <ValidationMessage For="() => _form.TopK" class="text-error text-xs mt-1" />
+                </FormField>
+
+                <!-- FrequencyPenalty -->
+                <FormField Label="Frequency Penalty">
+                    <InputNumber class="input input-bordered" @bind-Value="_form.FrequencyPenalty" step="0.1" />
+                </FormField>
+
+                <!-- PresencePenalty -->
+                <FormField Label="Presence Penalty">
+                    <InputNumber class="input input-bordered" @bind-Value="_form.PresencePenalty" step="0.1" />
+                </FormField>
+
+                <!-- Seed -->
+                <FormField Label="Seed">
+                    <InputNumber class="input input-bordered" @bind-Value="_form.Seed" />
+                </FormField>
+
+                <!-- AllowMultipleToolCalls -->
+                <FormField Label="Allow Multiple Tool Calls">
+                    <NullableBoolSelect Value="_form.AllowMultipleToolCalls"
+                                           ValueChanged="v => _form.AllowMultipleToolCalls = v" />
+                </FormField>
+
+                <!-- AllowBackgroundResponses -->
+                <FormField Label="Allow Background Responses">
+                    <NullableBoolSelect Value="_form.AllowBackgroundResponses"
+                                           ValueChanged="v => _form.AllowBackgroundResponses = v" />
+                </FormField>
+
+                <!-- Description (full width) -->
+                <FormField Label="Description" ColSpan="md:col-span-2">
+                    <InputTextArea class="textarea textarea-bordered" rows="2" @bind-Value="_form.Description" />
+                </FormField>
+
+                <!-- Instructions (full width) -->
+                <FormField Label="Instructions" ColSpan="md:col-span-2">
+                    <InputTextArea class="textarea textarea-bordered" rows="4" @bind-Value="_form.Instructions" placeholder="System prompt / instructions..." />
+                </FormField>
+
+                <!-- StopSequences (full width) -->
+                <FormField Label="Stop Sequences" ColSpan="md:col-span-2">
+                    <TagInput Tags="_stopSequences" TagsChanged="tags => _stopSequences = tags" />
+                </FormField>
+            </div>
+
+            <div class="modal-action mt-6">
+                <Button Type="button" Variant="ghost" Disabled="_isSaving" OnClick="CloseModal">Cancel</Button>
+                <Button Type="submit" Variant="primary" IsLoading="_isSaving" Disabled="_isSaving">
+                    @(_isEditMode ? "Save Changes" : "Create")
+                </Button>
+            </div>
+        </EditForm>
+    </ChildContent>
+</Modal>
+
+@code {
+    private Toast _toast = default!;
+    private ConfirmDeleteModal _deleteModal = default!;
+
+    private List<ChatAgent> _agents = [];
+    private bool _isLoading = true;
+
+    // Detail modal state
+    private bool _isDetailModalOpen;
+    private ChatAgent? _selectedAgent;
+
+    // Create/Edit modal state
+    private bool _isModalOpen;
+    private bool _isEditMode;
+    private bool _isSaving;
+    private ChatAgent _form = new() { Id = string.Empty };
+    private List<string> _stopSequences = [];
+
+    // Delete state
+    private string _deleteTargetId = string.Empty;
+    private string _deleteTargetName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAgents();
+    }
+
+    private async Task LoadAgents()
+    {
+        _isLoading = true;
+        try
+        {
+            _agents = (await ChatAgentService.GetAll()).ToList();
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void OpenDetailModal(ChatAgent agent)
+    {
+        _selectedAgent = agent;
+        _isDetailModalOpen = true;
+    }
+
+    private void CloseDetailModal()
+    {
+        _isDetailModalOpen = false;
+        _selectedAgent = null;
+    }
+
+    private void OpenCreateModal()
+    {
+        _form = new ChatAgent { Id = string.Empty };
+        _stopSequences = [];
+        _isEditMode = false;
+        _isModalOpen = true;
+    }
+
+    private void OpenEditModal(ChatAgent agent)
+    {
+        _form = new ChatAgent
+        {
+            Id = agent.Id,
+            Name = agent.Name,
+            Description = agent.Description,
+            ConversationId = agent.ConversationId,
+            Instructions = agent.Instructions,
+            Temperature = agent.Temperature,
+            MaxOutputTokens = agent.MaxOutputTokens,
+            TopP = agent.TopP,
+            TopK = agent.TopK,
+            FrequencyPenalty = agent.FrequencyPenalty,
+            PresencePenalty = agent.PresencePenalty,
+            Seed = agent.Seed,
+            ModelId = agent.ModelId,
+            AllowMultipleToolCalls = agent.AllowMultipleToolCalls,
+            AllowBackgroundResponses = agent.AllowBackgroundResponses
+        };
+        _stopSequences = agent.StopSequences is not null ? [.. agent.StopSequences] : [];
+        _isEditMode = true;
+        _isModalOpen = true;
+    }
+
+    private void CloseModal()
+    {
+        _isModalOpen = false;
+    }
+
+    private async Task SaveAgent()
+    {
+        _isSaving = true;
+        try
+        {
+            _form.StopSequences = _stopSequences.Count > 0 ? _stopSequences : null;
+
+            if (_isEditMode)
+            {
+                await ChatAgentService.Update(_form);
+                _toast.Show($"Chat agent '{_form.Id}' updated successfully.", Toast.ToastType.Success);
+            }
+            else
+            {
+                await ChatAgentService.Create(_form);
+                _toast.Show($"Chat agent '{_form.Id}' created successfully.", Toast.ToastType.Success);
+            }
+
+            _isModalOpen = false;
+            await LoadAgents();
+        }
+        catch (Exception ex)
+        {
+            _toast.Show($"Error: {ex.Message}", Toast.ToastType.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void OpenDeleteModal(ChatAgent agent)
+    {
+        _deleteTargetId = agent.Id;
+        _deleteTargetName = agent.Id;
+        _deleteModal.Open();
+    }
+
+    private async Task ExecuteDelete()
+    {
+        try
+        {
+            await ChatAgentService.Delete(_deleteTargetId);
+            _toast.Show($"Chat agent '{_deleteTargetId}' deleted.", Toast.ToastType.Success);
+            await LoadAgents();
+        }
+        catch (Exception ex)
+        {
+            _toast.Show($"Error: {ex.Message}", Toast.ToastType.Error);
+        }
+    }
+}

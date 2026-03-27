@@ -1,0 +1,24 @@
+@if (ShowDivider)
+{
+    <div class="divider my-2"></div>
+}
+<div class="mb-5">
+    <h4 class="text-xs uppercase tracking-widest opacity-50 font-semibold mb-3">@Title</h4>
+    @if (!string.IsNullOrEmpty(GridCols))
+    {
+        <div class="grid @GridCols gap-3">
+            @ChildContent
+        </div>
+    }
+    else
+    {
+        @ChildContent
+    }
+</div>
+
+@code {
+    [Parameter] public string Title               { get; set; } = string.Empty;
+    [Parameter] public bool ShowDivider           { get; set; }
+    [Parameter] public string GridCols            { get; set; } = "grid-cols-1 sm:grid-cols-2";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

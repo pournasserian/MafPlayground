@@ -1,0 +1,315 @@
+@page "/admin/chat-clients"
+@inject IChatClientService ChatClientService
+
+<PageTitle>Chat Clients — Admin</PageTitle>
+
+<Toast @ref="_toast" />
+<ConfirmDeleteModal @ref="_deleteModal" EntityName="@_deleteTargetName" OnConfirm="ExecuteDelete" />
+
+<!-- Page Header -->
+<PageHeader Title="Chat Clients" Subtitle="Manage AI provider client configurations">
+    <ActionContent>
+        <Button Variant="primary" Icon="plus" CssClass="w-full sm:w-auto" OnClick="OpenCreateModal">
+            New Client
+        </Button>
+    </ActionContent>
+</PageHeader>
+
+<!-- Table -->
+<DataTable IsLoading="_isLoading"
+              IsEmpty="@(_clients.Count == 0)"
+              EmptyTitle="No chat clients found."
+              EmptySubtitle='Click "New Client" to create one.'>
+    <HeaderContent>
+        <tr>
+            <th>Id</th>
+            <th>Provider</th>
+            <th>Model</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </HeaderContent>
+    <BodyContent>
+        @foreach (var client in _clients)
+        {
+            <tr>
+                <td class="font-mono font-semibold">@client.Id</td>
+                <td>@client.Provider</td>
+                <td class="font-mono text-sm">@client.Model</td>
+                <td class="max-w-xs truncate opacity-70">@client.Description</td>
+                <td>
+                    <div class="flex gap-1">
+                        <Button Variant="ghost" Size="xs" Icon="view" Title="View"
+                                   OnClick="() => OpenDetailModal(client)" />
+                        <Button Variant="ghost" Size="xs" Icon="edit" Title="Edit"
+                                   OnClick="() => OpenEditModal(client)" />
+                        <Button Variant="ghost" Size="xs" Icon="delete" Title="Delete"
+                                   CssClass="text-error" OnClick="() => OpenDeleteModal(client)" />
+                    </div>
+                </td>
+            </tr>
+        }
+    </BodyContent>
+</DataTable>
+
+<!-- Detail Modal -->
+<Modal IsOpen="_isDetailModalOpen"
+          Title="@(_selectedClient?.Id ?? "")"
+          Subtitle="@_selectedClient?.Description"
+          OnClose="CloseDetailModal">
+    <ChildContent>
+        @if (_selectedClient is not null)
+        {
+            <!-- Configuration Section -->
+            <DetailSection Title="Configuration" GridCols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                <DetailField Label="Id" Value="@_selectedClient.Id" Mono="true" />
+                <DetailField Label="Provider" Value="@_selectedClient.Provider" />
+                <DetailField Label="Model" Value="@_selectedClient.Model" Mono="true" />
+                <DetailField Label="Endpoint" Value="@_selectedClient.Endpoint" Mono="true" />
+                <DetailField Label="Organization Id" Value="@_selectedClient.OrganizationId" />
+                <DetailField Label="Project Id" Value="@_selectedClient.ProjectId" />
+            </DetailSection>
+
+            <!-- Connection & Retry Section -->
+            <DetailSection Title="Connection &amp; Retry" ShowDivider="true"
+                              GridCols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                <DetailField Label="Max Retries" Value="@_selectedClient.MaxRetries?.ToString()" />
+                <DetailField Label="Network Timeout (s)" Value="@(_selectedClient.NetworkTimeout.HasValue ? ((int)_selectedClient.NetworkTimeout.Value.TotalSeconds).ToString() : null)" />
+                <DetailField Label="Enable Distributed Tracing" Value="@_selectedClient.EnableDistributedTracing?.ToString()" />
+            </DetailSection>
+
+            @if (!string.IsNullOrWhiteSpace(_selectedClient.Description))
+            {
+                <DetailSection Title="Description" ShowDivider="true" GridCols="">
+                    <DetailField Label="Description" Value="@_selectedClient.Description" />
+                </DetailSection>
+            }
+        }
+    </ChildContent>
+    <FooterContent>
+        <Button Variant="ghost" OnClick="CloseDetailModal">Close</Button>
+        <Button Variant="primary" Icon="edit"
+                   OnClick="() => { CloseDetailModal(); OpenEditModal(_selectedClient!); }">
+            Edit
+        </Button>
+    </FooterContent>
+</Modal>
+
+<!-- Create / Edit Modal -->
+<Modal IsOpen="_isModalOpen"
+          Title="@(_isEditMode ? "Edit Chat Client" : "New Chat Client")"
+          MaxWidth="max-w-2xl"
+          ShowCloseButton="false"
+          OnClose="CloseModal">
+    <ChildContent>
+        <EditForm Model="_form" OnValidSubmit="SaveClient">
+            <DataAnnotationsValidator />
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Id -->
+                <FormField Label="Id" Required="true">
+                    <InputText class="input input-bordered" @bind-Value="_form.Id" disabled="@_isEditMode" placeholder="e.g. Default" />
+                    <ValidationMessage For="() => _form.Id" class="text-error text-xs mt-1" />
+                </FormField>
+
+                <!-- Provider -->
+                <FormField Label="Provider" Required="true">
+                    <InputText class="input input-bordered" @bind-Value="_form.Provider" placeholder="e.g. OpenAI" />
+                    <ValidationMessage For="() => _form.Provider" class="text-error text-xs mt-1" />
+                </FormField>
+
+                <!-- Model -->
+                <FormField Label="Model">
+                    <InputText class="input input-bordered" @bind-Value="_form.Model" placeholder="openai/gpt-4o-mini" />
+                </FormField>
+
+                <!-- Endpoint -->
+                <FormField Label="Endpoint">
+                    <InputText class="input input-bordered" @bind-Value="_form.Endpoint" placeholder="https://openrouter.ai/api/v1" />
+                </FormField>
+
+                <!-- OrganizationId -->
+                <FormField Label="Organization Id">
+                    <InputText class="input input-bordered" @bind-Value="_form.OrganizationId" />
+                </FormField>
+
+                <!-- ProjectId -->
+                <FormField Label="Project Id">
+                    <InputText class="input input-bordered" @bind-Value="_form.ProjectId" />
+                </FormField>
+
+                <!-- MaxRetries -->
+                <FormField Label="Max Retries">
+                    <InputNumber class="input input-bordered" @bind-Value="_form.MaxRetries" placeholder="3" />
+                    <ValidationMessage For="() => _form.MaxRetries" class="text-error text-xs mt-1" />
+                </FormField>
+
+                <!-- NetworkTimeout (seconds) -->
+                <FormField Label="Network Timeout (seconds)">
+                    <input type="number" class="input input-bordered" min="0"
+                           value="@_networkTimeoutSeconds"
+                           @onchange="e => _networkTimeoutSeconds = e.Value is not null ? int.TryParse(e.Value.ToString(), out var v) ? v : (int?)null : null"
+                           placeholder="30" />
+                </FormField>
+
+                <!-- EnableDistributedTracing -->
+                <FormField Label="Enable Distributed Tracing">
+                    <NullableBoolSelect Value="_form.EnableDistributedTracing"
+                                           ValueChanged="v => _form.EnableDistributedTracing = v" />
+                </FormField>
+
+                <!-- Description (full width) -->
+                <FormField Label="Description" ColSpan="md:col-span-2">
+                    <InputTextArea class="textarea textarea-bordered" rows="2" @bind-Value="_form.Description" />
+                </FormField>
+            </div>
+
+            <div class="modal-action mt-6">
+                <Button Type="button" Variant="ghost" Disabled="_isSaving" OnClick="CloseModal">Cancel</Button>
+                <Button Type="submit" Variant="primary" IsLoading="_isSaving" Disabled="_isSaving">
+                    @(_isEditMode ? "Save Changes" : "Create")
+                </Button>
+            </div>
+        </EditForm>
+    </ChildContent>
+</Modal>
+
+@code {
+    private Toast _toast = default!;
+    private ConfirmDeleteModal _deleteModal = default!;
+
+    private List<ChatClient> _clients = [];
+    private bool _isLoading = true;
+
+    // Detail modal state
+    private bool _isDetailModalOpen;
+    private ChatClient? _selectedClient;
+
+    // Create/Edit modal state
+    private bool _isModalOpen;
+    private bool _isEditMode;
+    private bool _isSaving;
+    private ChatClient _form = new() { Id = string.Empty, Provider = string.Empty };
+    private int? _networkTimeoutSeconds;
+
+    // Delete state
+    private string _deleteTargetId = string.Empty;
+    private string _deleteTargetName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadClients();
+    }
+
+    private async Task LoadClients()
+    {
+        _isLoading = true;
+        try
+        {
+            _clients = (await ChatClientService.GetAll()).ToList();
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void OpenDetailModal(ChatClient client)
+    {
+        _selectedClient = client;
+        _isDetailModalOpen = true;
+    }
+
+    private void CloseDetailModal()
+    {
+        _isDetailModalOpen = false;
+        _selectedClient = null;
+    }
+
+    private void OpenCreateModal()
+    {
+        _form = new ChatClient { Id = string.Empty, Provider = string.Empty };
+        _networkTimeoutSeconds = null;
+        _isEditMode = false;
+        _isModalOpen = true;
+    }
+
+    private void OpenEditModal(ChatClient client)
+    {
+        _form = new ChatClient
+        {
+            Id = client.Id,
+            Description = client.Description,
+            Provider = client.Provider,
+            Model = client.Model,
+            Endpoint = client.Endpoint,
+            OrganizationId = client.OrganizationId,
+            ProjectId = client.ProjectId,
+            MaxRetries = client.MaxRetries,
+            NetworkTimeout = client.NetworkTimeout,
+            EnableDistributedTracing = client.EnableDistributedTracing
+        };
+        _networkTimeoutSeconds = client.NetworkTimeout.HasValue ? (int)client.NetworkTimeout.Value.TotalSeconds : null;
+        _isEditMode = true;
+        _isModalOpen = true;
+    }
+
+    private void CloseModal()
+    {
+        _isModalOpen = false;
+    }
+
+    private async Task SaveClient()
+    {
+        _isSaving = true;
+        try
+        {
+            _form.NetworkTimeout = _networkTimeoutSeconds.HasValue
+                ? TimeSpan.FromSeconds(_networkTimeoutSeconds.Value)
+                : null;
+
+            if (_isEditMode)
+            {
+                await ChatClientService.Update(_form);
+                _toast.Show($"Chat client '{_form.Id}' updated successfully.", Toast.ToastType.Success);
+            }
+            else
+            {
+                await ChatClientService.Create(_form);
+                _toast.Show($"Chat client '{_form.Id}' created successfully.", Toast.ToastType.Success);
+            }
+
+            _isModalOpen = false;
+            await LoadClients();
+        }
+        catch (Exception ex)
+        {
+            _toast.Show($"Error: {ex.Message}", Toast.ToastType.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void OpenDeleteModal(ChatClient client)
+    {
+        _deleteTargetId = client.Id;
+        _deleteTargetName = client.Id;
+        _deleteModal.Open();
+    }
+
+    private async Task ExecuteDelete()
+    {
+        try
+        {
+            await ChatClientService.Delete(_deleteTargetId);
+            _toast.Show($"Chat client '{_deleteTargetId}' deleted.", Toast.ToastType.Success);
+            await LoadClients();
+        }
+        catch (Exception ex)
+        {
+            _toast.Show($"Error: {ex.Message}", Toast.ToastType.Error);
+        }
+    }
+}

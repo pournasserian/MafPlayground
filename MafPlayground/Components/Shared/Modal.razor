@@ -1,0 +1,50 @@
+<dialog class="modal @(IsOpen ? "modal-open" : "")">
+    <div class="modal-box w-11/12 @MaxWidth max-h-[90vh] overflow-y-auto">
+        @if (!string.IsNullOrEmpty(Title))
+        {
+            <div class="flex items-start justify-between mb-4">
+                <div>
+                    <h3 class="font-bold text-lg">@Title</h3>
+                    @if (!string.IsNullOrEmpty(Subtitle))
+                    {
+                        <p class="text-sm opacity-60 mt-0.5">@Subtitle</p>
+                    }
+                </div>
+                @if (ShowCloseButton)
+                {
+                    <Button Variant="ghost" Size="sm" Circle="true" Icon="close" Title="Close" OnClick="OnClose" />
+                }
+            </div>
+        }
+        @ChildContent
+        @if (FooterContent is not null)
+        {
+            <div class="modal-action mt-4">
+                @FooterContent
+            </div>
+        }
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button type="button" @onclick="HandleBackdropClick">close</button>
+    </form>
+</dialog>
+
+@code {
+    [Parameter] public bool IsOpen              { get; set; }
+    [Parameter] public string Title             { get; set; } = string.Empty;
+    [Parameter] public string? Subtitle         { get; set; }
+    [Parameter] public string MaxWidth          { get; set; } = "max-w-3xl";
+    [Parameter] public EventCallback OnClose    { get; set; }
+    [Parameter] public RenderFragment? ChildContent  { get; set; }
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+    [Parameter] public bool ShowCloseButton     { get; set; } = true;
+    [Parameter] public bool CloseOnBackdrop     { get; set; } = true;
+
+    private async Task HandleBackdropClick()
+    {
+        if (CloseOnBackdrop)
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+}

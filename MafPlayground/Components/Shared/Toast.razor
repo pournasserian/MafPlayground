@@ -1,0 +1,45 @@
+@if (IsVisible)
+{
+    <div class="toast toast-top toast-end z-50">
+        <div class="alert @AlertClass shadow-lg">
+            <span>@Message</span>
+        </div>
+    </div>
+}
+
+@code {
+    private bool IsVisible { get; set; }
+    private string Message { get; set; } = string.Empty;
+    private string AlertClass { get; set; } = "alert-info";
+
+    private System.Timers.Timer? _timer;
+
+    public void Show(string message, ToastType type = ToastType.Info)
+    {
+        Message = message;
+        AlertClass = type switch
+        {
+            ToastType.Success => "alert-success",
+            ToastType.Error   => "alert-error",
+            ToastType.Warning => "alert-warning",
+            _                 => "alert-info"
+        };
+        IsVisible = true;
+        StateHasChanged();
+
+        _timer?.Dispose();
+        _timer = new System.Timers.Timer(3000);
+        _timer.Elapsed += (_, _) =>
+        {
+            IsVisible = false;
+            _timer?.Dispose();
+            InvokeAsync(StateHasChanged);
+        };
+        _timer.AutoReset = false;
+        _timer.Start();
+    }
+
+    public void Dispose() => _timer?.Dispose();
+
+    public enum ToastType { Info, Success, Error, Warning }
+}
