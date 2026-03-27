@@ -1,0 +1,59 @@
+<div class="flex flex-col gap-2">
+    @if (Tags.Count > 0)
+    {
+        <div class="flex flex-wrap gap-2">
+            @foreach (var tag in Tags)
+            {
+                <div class="badge badge-primary badge-lg gap-1">
+                    <span>@tag</span>
+                    <button type="button" class="btn btn-ghost btn-xs p-0 min-h-0 h-auto" @onclick="() => RemoveTag(tag)">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            }
+        </div>
+    }
+    <div class="flex gap-2">
+        <input type="text"
+               class="input input-bordered input-sm flex-1"
+               placeholder="Type and press Enter to add..."
+               @bind="_inputValue"
+               @bind:event="oninput"
+               @onkeydown="HandleKeyDown" />
+        <button type="button" class="btn btn-sm btn-outline" @onclick="AddTag">Add</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<string> Tags { get; set; } = [];
+    [Parameter] public EventCallback<List<string>> TagsChanged { get; set; }
+
+    private string _inputValue = string.Empty;
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key is "Enter" or ",")
+        {
+            await AddTag();
+        }
+    }
+
+    private async Task AddTag()
+    {
+        var trimmed = _inputValue.Trim().Trim(',');
+        if (!string.IsNullOrWhiteSpace(trimmed) && !Tags.Contains(trimmed))
+        {
+            Tags = [.. Tags, trimmed];
+            await TagsChanged.InvokeAsync(Tags);
+        }
+        _inputValue = string.Empty;
+    }
+
+    private async Task RemoveTag(string tag)
+    {
+        Tags = Tags.Where(t => t != tag).ToList();
+        await TagsChanged.InvokeAsync(Tags);
+    }
+}

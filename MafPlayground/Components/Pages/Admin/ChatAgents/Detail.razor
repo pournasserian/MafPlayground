@@ -1,0 +1,142 @@
+@page "/admin/chat-agents/{Id}"
+@rendermode InteractiveServer
+@inject IChatAgentService ChatAgentService
+
+<PageTitle>@(_agent?.Id ?? "Chat Agent") — Admin</PageTitle>
+
+@if (_isLoading)
+{
+    <div class="flex justify-center items-center py-16">
+        <span class="loading loading-spinner loading-lg"></span>
+    </div>
+}
+else if (_agent is null)
+{
+    <div class="alert alert-error max-w-md">
+        <span>Chat agent not found.</span>
+        <a href="/admin/chat-agents" class="btn btn-sm btn-ghost">Back to list</a>
+    </div>
+}
+else
+{
+    <!-- Breadcrumb -->
+    <div class="breadcrumbs text-sm mb-4">
+        <ul>
+            <li><a href="/admin/chat-agents">Chat Agents</a></li>
+            <li class="font-semibold">@_agent.Id</li>
+        </ul>
+    </div>
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold font-mono">@_agent.Id</h1>
+            @if (!string.IsNullOrEmpty(_agent.Name))
+            {
+                <p class="text-sm opacity-60 mt-1">@_agent.Name</p>
+            }
+        </div>
+        <a href="/admin/chat-agents" class="btn btn-ghost btn-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back
+        </a>
+    </div>
+
+    <!-- Identity Card -->
+    <div class="card bg-base-100 shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="card-title text-base mb-4">Identity</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                @Field("Id", _agent.Id, mono: true)
+                @Field("Name", _agent.Name)
+                @Field("Model Id", _agent.ModelId, mono: true)
+                @Field("Conversation Id", _agent.ConversationId, mono: true)
+                <div class="md:col-span-2 lg:col-span-3">
+                    @Field("Description", _agent.Description)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parameters Card -->
+    <div class="card bg-base-100 shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="card-title text-base mb-4">Sampling Parameters</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                @Field("Temperature", _agent.Temperature?.ToString("F2"))
+                @Field("Max Output Tokens", _agent.MaxOutputTokens?.ToString())
+                @Field("Top P", _agent.TopP?.ToString("F3"))
+                @Field("Top K", _agent.TopK?.ToString())
+                @Field("Frequency Penalty", _agent.FrequencyPenalty?.ToString("F2"))
+                @Field("Presence Penalty", _agent.PresencePenalty?.ToString("F2"))
+                @Field("Seed", _agent.Seed?.ToString())
+            </div>
+        </div>
+    </div>
+
+    <!-- Behavior Card -->
+    <div class="card bg-base-100 shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="card-title text-base mb-4">Behavior</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @Field("Allow Multiple Tool Calls", _agent.AllowMultipleToolCalls?.ToString())
+                @Field("Allow Background Responses", _agent.AllowBackgroundResponses?.ToString())
+            </div>
+
+            @if (_agent.StopSequences is { Count: > 0 })
+            {
+                <div class="mt-4">
+                    <span class="text-xs uppercase tracking-wide opacity-50 font-medium">Stop Sequences</span>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        @foreach (var seq in _agent.StopSequences)
+                        {
+                            <span class="badge badge-outline font-mono">@seq</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Instructions Card -->
+    @if (!string.IsNullOrWhiteSpace(_agent.Instructions))
+    {
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title text-base mb-4">Instructions</h2>
+                <pre class="whitespace-pre-wrap text-sm font-mono bg-base-200 p-4 rounded-lg leading-relaxed">@_agent.Instructions</pre>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public string Id { get; set; } = string.Empty;
+
+    private ChatAgent? _agent;
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isLoading = true;
+        _agent = await ChatAgentService.Get(Id);
+        _isLoading = false;
+    }
+
+    private static RenderFragment Field(string label, string? value, bool mono = false) => __builder =>
+    {
+        __builder.OpenElement(0, "div");
+        __builder.AddAttribute(1, "class", "flex flex-col gap-1");
+        __builder.OpenElement(2, "span");
+        __builder.AddAttribute(3, "class", "text-xs uppercase tracking-wide opacity-50 font-medium");
+        __builder.AddContent(4, label);
+        __builder.CloseElement();
+        __builder.OpenElement(5, "span");
+        __builder.AddAttribute(6, "class", $"text-sm {(mono ? "font-mono" : "")}");
+        __builder.AddContent(7, string.IsNullOrEmpty(value) ? "—" : value);
+        __builder.CloseElement();
+        __builder.CloseElement();
+    };
+}

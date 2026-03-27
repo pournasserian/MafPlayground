@@ -1,0 +1,367 @@
+@page "/admin/chat-agents"
+@rendermode InteractiveServer
+@inject IChatAgentService ChatAgentService
+
+<PageTitle>Chat Agents — Admin</PageTitle>
+
+<Toast @ref="_toast" />
+<ConfirmDeleteModal @ref="_deleteModal" EntityName="@_deleteTargetName" OnConfirm="ExecuteDelete" />
+
+<!-- Page Header -->
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Chat Agents</h1>
+        <p class="text-sm opacity-60 mt-1">Manage AI agent configurations and behaviors</p>
+    </div>
+    <button class="btn btn-primary" @onclick="OpenCreateModal">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        New Agent
+    </button>
+</div>
+
+<!-- Table -->
+<div class="card bg-base-100 shadow-sm">
+    <div class="card-body p-0">
+        @if (_isLoading)
+        {
+            <div class="flex justify-center items-center py-16">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+        }
+        else if (_agents.Count == 0)
+        {
+            <div class="text-center py-16 opacity-50">
+                <p class="text-lg">No chat agents found.</p>
+                <p class="text-sm mt-1">Click "New Agent" to create one.</p>
+            </div>
+        }
+        else
+        {
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Name</th>
+                            <th>Model Id</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var agent in _agents)
+                        {
+                            <tr>
+                                <td class="font-mono font-semibold">@agent.Id</td>
+                                <td>@(agent.Name ?? "—")</td>
+                                <td class="font-mono text-sm">@(agent.ModelId ?? "—")</td>
+                                <td class="max-w-xs truncate opacity-70">@(agent.Description ?? "—")</td>
+                                <td>
+                                    <div class="flex gap-1">
+                                        <a href="/admin/chat-agents/@agent.Id" class="btn btn-xs btn-ghost" title="View">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        </a>
+                                        <button class="btn btn-xs btn-ghost" title="Edit" @onclick="() => OpenEditModal(agent)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                        </button>
+                                        <button class="btn btn-xs btn-ghost text-error" title="Delete" @onclick="() => OpenDeleteModal(agent)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Create / Edit Modal -->
+<dialog class="modal @(_isModalOpen ? "modal-open" : "")">
+    <div class="modal-box w-11/12 max-w-3xl max-h-[90vh] overflow-y-auto">
+        <h3 class="font-bold text-lg mb-4">@(_isEditMode ? "Edit Chat Agent" : "New Chat Agent")</h3>
+
+        <EditForm Model="_form" OnValidSubmit="SaveAgent">
+            <DataAnnotationsValidator />
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Id -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Id <span class="text-error">*</span></span></label>
+                    <InputText class="input input-bordered" @bind-Value="_form.Id" disabled="@_isEditMode" placeholder="e.g. Default" />
+                    <ValidationMessage For="() => _form.Id" class="text-error text-xs mt-1" />
+                </div>
+
+                <!-- Name -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Name</span></label>
+                    <InputText class="input input-bordered" @bind-Value="_form.Name" placeholder="e.g. HelperBot" />
+                </div>
+
+                <!-- ModelId -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Model Id</span></label>
+                    <InputText class="input input-bordered" @bind-Value="_form.ModelId" placeholder="e.g. openai/gpt-4o" />
+                </div>
+
+                <!-- ConversationId -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Conversation Id</span></label>
+                    <InputText class="input input-bordered" @bind-Value="_form.ConversationId" />
+                </div>
+
+                <!-- Temperature -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Temperature <span class="opacity-50 text-xs">(0–2)</span></span></label>
+                    <InputNumber class="input input-bordered" @bind-Value="_form.Temperature" step="0.1" placeholder="1.0" />
+                    <ValidationMessage For="() => _form.Temperature" class="text-error text-xs mt-1" />
+                </div>
+
+                <!-- MaxOutputTokens -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Max Output Tokens</span></label>
+                    <InputNumber class="input input-bordered" @bind-Value="_form.MaxOutputTokens" placeholder="4096" />
+                    <ValidationMessage For="() => _form.MaxOutputTokens" class="text-error text-xs mt-1" />
+                </div>
+
+                <!-- TopP -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Top P <span class="opacity-50 text-xs">(0–1)</span></span></label>
+                    <InputNumber class="input input-bordered" @bind-Value="_form.TopP" step="0.05" />
+                    <ValidationMessage For="() => _form.TopP" class="text-error text-xs mt-1" />
+                </div>
+
+                <!-- TopK -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Top K</span></label>
+                    <InputNumber class="input input-bordered" @bind-Value="_form.TopK" />
+                    <ValidationMessage For="() => _form.TopK" class="text-error text-xs mt-1" />
+                </div>
+
+                <!-- FrequencyPenalty -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Frequency Penalty</span></label>
+                    <InputNumber class="input input-bordered" @bind-Value="_form.FrequencyPenalty" step="0.1" />
+                </div>
+
+                <!-- PresencePenalty -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Presence Penalty</span></label>
+                    <InputNumber class="input input-bordered" @bind-Value="_form.PresencePenalty" step="0.1" />
+                </div>
+
+                <!-- Seed -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Seed</span></label>
+                    <InputNumber class="input input-bordered" @bind-Value="_form.Seed" />
+                </div>
+
+                <!-- AllowMultipleToolCalls -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Allow Multiple Tool Calls</span></label>
+                    <select class="select select-bordered" value="@NullableBoolToString(_form.AllowMultipleToolCalls)"
+                            @onchange="e => _form.AllowMultipleToolCalls = StringToNullableBool(e.Value?.ToString())">
+                        <option value="">— Unset —</option>
+                        <option value="true">True</option>
+                        <option value="false">False</option>
+                    </select>
+                </div>
+
+                <!-- AllowBackgroundResponses -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Allow Background Responses</span></label>
+                    <select class="select select-bordered" value="@NullableBoolToString(_form.AllowBackgroundResponses)"
+                            @onchange="e => _form.AllowBackgroundResponses = StringToNullableBool(e.Value?.ToString())">
+                        <option value="">— Unset —</option>
+                        <option value="true">True</option>
+                        <option value="false">False</option>
+                    </select>
+                </div>
+
+                <!-- Description (full width) -->
+                <div class="form-control md:col-span-2">
+                    <label class="label"><span class="label-text font-medium">Description</span></label>
+                    <InputTextArea class="textarea textarea-bordered" rows="2" @bind-Value="_form.Description" />
+                </div>
+
+                <!-- Instructions (full width) -->
+                <div class="form-control md:col-span-2">
+                    <label class="label"><span class="label-text font-medium">Instructions</span></label>
+                    <InputTextArea class="textarea textarea-bordered" rows="4" @bind-Value="_form.Instructions" placeholder="System prompt / instructions..." />
+                </div>
+
+                <!-- StopSequences (full width) -->
+                <div class="form-control md:col-span-2">
+                    <label class="label"><span class="label-text font-medium">Stop Sequences</span></label>
+                    <TagInput Tags="_stopSequences" TagsChanged="tags => _stopSequences = tags" />
+                </div>
+            </div>
+
+            <div class="modal-action mt-6">
+                <button type="button" class="btn btn-ghost" @onclick="CloseModal" disabled="@_isSaving">Cancel</button>
+                <button type="submit" class="btn btn-primary" disabled="@_isSaving">
+                    @if (_isSaving)
+                    {
+                        <span class="loading loading-spinner loading-sm"></span>
+                    }
+                    @(_isEditMode ? "Save Changes" : "Create")
+                </button>
+            </div>
+        </EditForm>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button type="button" @onclick="CloseModal">close</button>
+    </form>
+</dialog>
+
+@code {
+    private Toast _toast = default!;
+    private ConfirmDeleteModal _deleteModal = default!;
+
+    private List<ChatAgent> _agents = [];
+    private bool _isLoading = true;
+
+    // Modal state
+    private bool _isModalOpen;
+    private bool _isEditMode;
+    private bool _isSaving;
+    private ChatAgent _form = new() { Id = string.Empty };
+    private List<string> _stopSequences = [];
+
+    // Delete state
+    private string _deleteTargetId = string.Empty;
+    private string _deleteTargetName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAgents();
+    }
+
+    private async Task LoadAgents()
+    {
+        _isLoading = true;
+        try
+        {
+            _agents = (await ChatAgentService.GetAll()).ToList();
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void OpenCreateModal()
+    {
+        _form = new ChatAgent { Id = string.Empty };
+        _stopSequences = [];
+        _isEditMode = false;
+        _isModalOpen = true;
+    }
+
+    private void OpenEditModal(ChatAgent agent)
+    {
+        _form = new ChatAgent
+        {
+            Id = agent.Id,
+            Name = agent.Name,
+            Description = agent.Description,
+            ConversationId = agent.ConversationId,
+            Instructions = agent.Instructions,
+            Temperature = agent.Temperature,
+            MaxOutputTokens = agent.MaxOutputTokens,
+            TopP = agent.TopP,
+            TopK = agent.TopK,
+            FrequencyPenalty = agent.FrequencyPenalty,
+            PresencePenalty = agent.PresencePenalty,
+            Seed = agent.Seed,
+            ModelId = agent.ModelId,
+            AllowMultipleToolCalls = agent.AllowMultipleToolCalls,
+            AllowBackgroundResponses = agent.AllowBackgroundResponses
+        };
+        _stopSequences = agent.StopSequences is not null ? [.. agent.StopSequences] : [];
+        _isEditMode = true;
+        _isModalOpen = true;
+    }
+
+    private void CloseModal()
+    {
+        _isModalOpen = false;
+    }
+
+    private async Task SaveAgent()
+    {
+        _isSaving = true;
+        try
+        {
+            _form.StopSequences = _stopSequences.Count > 0 ? _stopSequences : null;
+
+            if (_isEditMode)
+            {
+                await ChatAgentService.Update(_form);
+                _toast.Show($"Chat agent '{_form.Id}' updated successfully.", Toast.ToastType.Success);
+            }
+            else
+            {
+                await ChatAgentService.Create(_form);
+                _toast.Show($"Chat agent '{_form.Id}' created successfully.", Toast.ToastType.Success);
+            }
+
+            _isModalOpen = false;
+            await LoadAgents();
+        }
+        catch (Exception ex)
+        {
+            _toast.Show($"Error: {ex.Message}", Toast.ToastType.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void OpenDeleteModal(ChatAgent agent)
+    {
+        _deleteTargetId = agent.Id;
+        _deleteTargetName = agent.Id;
+        _deleteModal.Open();
+    }
+
+    private async Task ExecuteDelete()
+    {
+        try
+        {
+            await ChatAgentService.Delete(_deleteTargetId);
+            _toast.Show($"Chat agent '{_deleteTargetId}' deleted.", Toast.ToastType.Success);
+            await LoadAgents();
+        }
+        catch (Exception ex)
+        {
+            _toast.Show($"Error: {ex.Message}", Toast.ToastType.Error);
+        }
+    }
+
+    private static string NullableBoolToString(bool? value) => value switch
+    {
+        true => "true",
+        false => "false",
+        _ => ""
+    };
+
+    private static bool? StringToNullableBool(string? value) => value switch
+    {
+        "true" => true,
+        "false" => false,
+        _ => null
+    };
+}

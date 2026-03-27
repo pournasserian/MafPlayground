@@ -1,0 +1,46 @@
+<dialog id="confirm-delete-modal" class="modal @(_isOpen ? "modal-open" : "")">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg text-error">Confirm Delete</h3>
+        <p class="py-4">
+            Are you sure you want to delete <strong>@EntityName</strong>?
+            This action cannot be undone.
+        </p>
+        <div class="modal-action">
+            <button class="btn btn-ghost" @onclick="Cancel" disabled="@_isDeleting">Cancel</button>
+            <button class="btn btn-error" @onclick="Confirm" disabled="@_isDeleting">
+                @if (_isDeleting)
+                {
+                    <span class="loading loading-spinner loading-sm"></span>
+                }
+                Delete
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button type="button" @onclick="Cancel">close</button>
+    </form>
+</dialog>
+
+@code {
+    [Parameter] public string EntityName { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnConfirm { get; set; }
+
+    private bool _isOpen;
+    private bool _isDeleting;
+
+    public void Open() => _isOpen = true;
+
+    private void Cancel()
+    {
+        _isOpen = false;
+        _isDeleting = false;
+    }
+
+    private async Task Confirm()
+    {
+        _isDeleting = true;
+        await OnConfirm.InvokeAsync();
+        _isDeleting = false;
+        _isOpen = false;
+    }
+}
