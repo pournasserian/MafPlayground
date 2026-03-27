@@ -39,8 +39,14 @@
     private async Task Confirm()
     {
         _isDeleting = true;
-        await OnConfirm.InvokeAsync();
-        _isDeleting = false;
-        _isOpen = false;
+        try
+        {
+            await OnConfirm.InvokeAsync();
+            _isOpen = false;
+        }
+        finally
+        {
+            _isDeleting = false;
+        }
     }
 }
