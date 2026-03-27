@@ -7,16 +7,16 @@
 <ConfirmDeleteModal @ref="_deleteModal" EntityName="@_deleteTargetName" OnConfirm="ExecuteDelete" />
 
 <!-- Page Header -->
-<AppPageHeader Title="Chat Agents" Subtitle="Manage AI agent configurations and behaviors">
+<PageHeader Title="Chat Agents" Subtitle="Manage AI agent configurations and behaviors">
     <ActionContent>
-        <AppButton Variant="primary" Icon="plus" CssClass="w-full sm:w-auto" OnClick="OpenCreateModal">
+        <Button Variant="primary" Icon="plus" CssClass="w-full sm:w-auto" OnClick="OpenCreateModal">
             New Agent
-        </AppButton>
+        </Button>
     </ActionContent>
-</AppPageHeader>
+</PageHeader>
 
 <!-- Table -->
-<AppDataTable IsLoading="_isLoading"
+<DataTable IsLoading="_isLoading"
               IsEmpty="@(_agents.Count == 0)"
               EmptyTitle="No chat agents found."
               EmptySubtitle='Click "New Agent" to create one.'>
@@ -39,21 +39,21 @@
                 <td class="max-w-xs truncate opacity-70">@(agent.Description ?? "—")</td>
                 <td>
                     <div class="flex gap-1">
-                        <AppButton Variant="ghost" Size="xs" Icon="view" Title="View"
+                        <Button Variant="ghost" Size="xs" Icon="view" Title="View"
                                    OnClick="() => OpenDetailModal(agent)" />
-                        <AppButton Variant="ghost" Size="xs" Icon="edit" Title="Edit"
+                        <Button Variant="ghost" Size="xs" Icon="edit" Title="Edit"
                                    OnClick="() => OpenEditModal(agent)" />
-                        <AppButton Variant="ghost" Size="xs" Icon="delete" Title="Delete"
+                        <Button Variant="ghost" Size="xs" Icon="delete" Title="Delete"
                                    CssClass="text-error" OnClick="() => OpenDeleteModal(agent)" />
                     </div>
                 </td>
             </tr>
         }
     </BodyContent>
-</AppDataTable>
+</DataTable>
 
 <!-- Detail Modal -->
-<AppModal IsOpen="_isDetailModalOpen"
+<Modal IsOpen="_isDetailModalOpen"
           Title="@(_selectedAgent?.Id ?? "")"
           Subtitle="@_selectedAgent?.Name"
           OnClose="CloseDetailModal">
@@ -61,62 +61,62 @@
         @if (_selectedAgent is not null)
         {
             <!-- Identity Section -->
-            <AppDetailSection Title="Identity">
-                <AppDetailField Label="Id" Value="@_selectedAgent.Id" Mono="true" />
-                <AppDetailField Label="Name" Value="@_selectedAgent.Name" />
-                <AppDetailField Label="Model Id" Value="@_selectedAgent.ModelId" Mono="true" />
-                <AppDetailField Label="Conversation Id" Value="@_selectedAgent.ConversationId" Mono="true" />
+            <DetailSection Title="Identity">
+                <DetailField Label="Id" Value="@_selectedAgent.Id" Mono="true" />
+                <DetailField Label="Name" Value="@_selectedAgent.Name" />
+                <DetailField Label="Model Id" Value="@_selectedAgent.ModelId" Mono="true" />
+                <DetailField Label="Conversation Id" Value="@_selectedAgent.ConversationId" Mono="true" />
                 @if (!string.IsNullOrWhiteSpace(_selectedAgent.Description))
                 {
-                    <AppDetailField Label="Description" Value="@_selectedAgent.Description" CssClass="sm:col-span-2" />
+                    <DetailField Label="Description" Value="@_selectedAgent.Description" CssClass="sm:col-span-2" />
                 }
-            </AppDetailSection>
+            </DetailSection>
 
             <!-- Sampling Parameters Section -->
-            <AppDetailSection Title="Sampling Parameters" ShowDivider="true"
+            <DetailSection Title="Sampling Parameters" ShowDivider="true"
                               GridCols="grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-                <AppDetailField Label="Temperature" Value="@_selectedAgent.Temperature?.ToString("F2")" />
-                <AppDetailField Label="Max Output Tokens" Value="@_selectedAgent.MaxOutputTokens?.ToString()" />
-                <AppDetailField Label="Top P" Value="@_selectedAgent.TopP?.ToString("F3")" />
-                <AppDetailField Label="Top K" Value="@_selectedAgent.TopK?.ToString()" />
-                <AppDetailField Label="Frequency Penalty" Value="@_selectedAgent.FrequencyPenalty?.ToString("F2")" />
-                <AppDetailField Label="Presence Penalty" Value="@_selectedAgent.PresencePenalty?.ToString("F2")" />
-                <AppDetailField Label="Seed" Value="@_selectedAgent.Seed?.ToString()" />
-            </AppDetailSection>
+                <DetailField Label="Temperature" Value="@_selectedAgent.Temperature?.ToString("F2")" />
+                <DetailField Label="Max Output Tokens" Value="@_selectedAgent.MaxOutputTokens?.ToString()" />
+                <DetailField Label="Top P" Value="@_selectedAgent.TopP?.ToString("F3")" />
+                <DetailField Label="Top K" Value="@_selectedAgent.TopK?.ToString()" />
+                <DetailField Label="Frequency Penalty" Value="@_selectedAgent.FrequencyPenalty?.ToString("F2")" />
+                <DetailField Label="Presence Penalty" Value="@_selectedAgent.PresencePenalty?.ToString("F2")" />
+                <DetailField Label="Seed" Value="@_selectedAgent.Seed?.ToString()" />
+            </DetailSection>
 
             <!-- Behavior Section -->
-            <AppDetailSection Title="Behavior" ShowDivider="true">
-                <AppDetailField Label="Allow Multiple Tool Calls" Value="@_selectedAgent.AllowMultipleToolCalls?.ToString()" />
-                <AppDetailField Label="Allow Background Responses" Value="@_selectedAgent.AllowBackgroundResponses?.ToString()" />
-            </AppDetailSection>
+            <DetailSection Title="Behavior" ShowDivider="true">
+                <DetailField Label="Allow Multiple Tool Calls" Value="@_selectedAgent.AllowMultipleToolCalls?.ToString()" />
+                <DetailField Label="Allow Background Responses" Value="@_selectedAgent.AllowBackgroundResponses?.ToString()" />
+            </DetailSection>
 
             @if (_selectedAgent.StopSequences is { Count: > 0 })
             {
                 <div class="mt-3">
                     <span class="text-xs uppercase tracking-wide opacity-50 font-medium">Stop Sequences</span>
-                    <AppBadgeList Items="_selectedAgent.StopSequences" Mono="true" />
+                    <BadgeList Items="_selectedAgent.StopSequences" Mono="true" />
                 </div>
             }
 
             @if (!string.IsNullOrWhiteSpace(_selectedAgent.Instructions))
             {
-                <AppDetailSection Title="Instructions" ShowDivider="true" GridCols="">
+                <DetailSection Title="Instructions" ShowDivider="true" GridCols="">
                     <pre class="whitespace-pre-wrap text-sm font-mono bg-base-200 p-4 rounded-lg leading-relaxed max-h-48 overflow-y-auto">@_selectedAgent.Instructions</pre>
-                </AppDetailSection>
+                </DetailSection>
             }
         }
     </ChildContent>
     <FooterContent>
-        <AppButton Variant="ghost" OnClick="CloseDetailModal">Close</AppButton>
-        <AppButton Variant="primary" Icon="edit"
+        <Button Variant="ghost" OnClick="CloseDetailModal">Close</Button>
+        <Button Variant="primary" Icon="edit"
                    OnClick="() => { CloseDetailModal(); OpenEditModal(_selectedAgent!); }">
             Edit
-        </AppButton>
+        </Button>
     </FooterContent>
-</AppModal>
+</Modal>
 
 <!-- Create / Edit Modal -->
-<AppModal IsOpen="_isModalOpen"
+<Modal IsOpen="_isModalOpen"
           Title="@(_isEditMode ? "Edit Chat Agent" : "New Chat Agent")"
           ShowCloseButton="false"
           OnClose="CloseModal">
@@ -126,102 +126,102 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Id -->
-                <AppFormField Label="Id" Required="true">
+                <FormField Label="Id" Required="true">
                     <InputText class="input input-bordered" @bind-Value="_form.Id" disabled="@_isEditMode" placeholder="e.g. Default" />
                     <ValidationMessage For="() => _form.Id" class="text-error text-xs mt-1" />
-                </AppFormField>
+                </FormField>
 
                 <!-- Name -->
-                <AppFormField Label="Name">
+                <FormField Label="Name">
                     <InputText class="input input-bordered" @bind-Value="_form.Name" placeholder="e.g. HelperBot" />
-                </AppFormField>
+                </FormField>
 
                 <!-- ModelId -->
-                <AppFormField Label="Model Id">
+                <FormField Label="Model Id">
                     <InputText class="input input-bordered" @bind-Value="_form.ModelId" placeholder="e.g. openai/gpt-4o" />
-                </AppFormField>
+                </FormField>
 
                 <!-- ConversationId -->
-                <AppFormField Label="Conversation Id">
+                <FormField Label="Conversation Id">
                     <InputText class="input input-bordered" @bind-Value="_form.ConversationId" />
-                </AppFormField>
+                </FormField>
 
                 <!-- Temperature -->
-                <AppFormField Label="Temperature" Hint="(0–2)">
+                <FormField Label="Temperature" Hint="(0–2)">
                     <InputNumber class="input input-bordered" @bind-Value="_form.Temperature" step="0.1" placeholder="1.0" />
                     <ValidationMessage For="() => _form.Temperature" class="text-error text-xs mt-1" />
-                </AppFormField>
+                </FormField>
 
                 <!-- MaxOutputTokens -->
-                <AppFormField Label="Max Output Tokens">
+                <FormField Label="Max Output Tokens">
                     <InputNumber class="input input-bordered" @bind-Value="_form.MaxOutputTokens" placeholder="4096" />
                     <ValidationMessage For="() => _form.MaxOutputTokens" class="text-error text-xs mt-1" />
-                </AppFormField>
+                </FormField>
 
                 <!-- TopP -->
-                <AppFormField Label="Top P" Hint="(0–1)">
+                <FormField Label="Top P" Hint="(0–1)">
                     <InputNumber class="input input-bordered" @bind-Value="_form.TopP" step="0.05" />
                     <ValidationMessage For="() => _form.TopP" class="text-error text-xs mt-1" />
-                </AppFormField>
+                </FormField>
 
                 <!-- TopK -->
-                <AppFormField Label="Top K">
+                <FormField Label="Top K">
                     <InputNumber class="input input-bordered" @bind-Value="_form.TopK" />
                     <ValidationMessage For="() => _form.TopK" class="text-error text-xs mt-1" />
-                </AppFormField>
+                </FormField>
 
                 <!-- FrequencyPenalty -->
-                <AppFormField Label="Frequency Penalty">
+                <FormField Label="Frequency Penalty">
                     <InputNumber class="input input-bordered" @bind-Value="_form.FrequencyPenalty" step="0.1" />
-                </AppFormField>
+                </FormField>
 
                 <!-- PresencePenalty -->
-                <AppFormField Label="Presence Penalty">
+                <FormField Label="Presence Penalty">
                     <InputNumber class="input input-bordered" @bind-Value="_form.PresencePenalty" step="0.1" />
-                </AppFormField>
+                </FormField>
 
                 <!-- Seed -->
-                <AppFormField Label="Seed">
+                <FormField Label="Seed">
                     <InputNumber class="input input-bordered" @bind-Value="_form.Seed" />
-                </AppFormField>
+                </FormField>
 
                 <!-- AllowMultipleToolCalls -->
-                <AppFormField Label="Allow Multiple Tool Calls">
-                    <AppNullableBoolSelect Value="_form.AllowMultipleToolCalls"
+                <FormField Label="Allow Multiple Tool Calls">
+                    <NullableBoolSelect Value="_form.AllowMultipleToolCalls"
                                            ValueChanged="v => _form.AllowMultipleToolCalls = v" />
-                </AppFormField>
+                </FormField>
 
                 <!-- AllowBackgroundResponses -->
-                <AppFormField Label="Allow Background Responses">
-                    <AppNullableBoolSelect Value="_form.AllowBackgroundResponses"
+                <FormField Label="Allow Background Responses">
+                    <NullableBoolSelect Value="_form.AllowBackgroundResponses"
                                            ValueChanged="v => _form.AllowBackgroundResponses = v" />
-                </AppFormField>
+                </FormField>
 
                 <!-- Description (full width) -->
-                <AppFormField Label="Description" ColSpan="md:col-span-2">
+                <FormField Label="Description" ColSpan="md:col-span-2">
                     <InputTextArea class="textarea textarea-bordered" rows="2" @bind-Value="_form.Description" />
-                </AppFormField>
+                </FormField>
 
                 <!-- Instructions (full width) -->
-                <AppFormField Label="Instructions" ColSpan="md:col-span-2">
+                <FormField Label="Instructions" ColSpan="md:col-span-2">
                     <InputTextArea class="textarea textarea-bordered" rows="4" @bind-Value="_form.Instructions" placeholder="System prompt / instructions..." />
-                </AppFormField>
+                </FormField>
 
                 <!-- StopSequences (full width) -->
-                <AppFormField Label="Stop Sequences" ColSpan="md:col-span-2">
+                <FormField Label="Stop Sequences" ColSpan="md:col-span-2">
                     <TagInput Tags="_stopSequences" TagsChanged="tags => _stopSequences = tags" />
-                </AppFormField>
+                </FormField>
             </div>
 
             <div class="modal-action mt-6">
-                <AppButton Type="button" Variant="ghost" Disabled="_isSaving" OnClick="CloseModal">Cancel</AppButton>
-                <AppButton Type="submit" Variant="primary" IsLoading="_isSaving" Disabled="_isSaving">
+                <Button Type="button" Variant="ghost" Disabled="_isSaving" OnClick="CloseModal">Cancel</Button>
+                <Button Type="submit" Variant="primary" IsLoading="_isSaving" Disabled="_isSaving">
                     @(_isEditMode ? "Save Changes" : "Create")
-                </AppButton>
+                </Button>
             </div>
         </EditForm>
     </ChildContent>
-</AppModal>
+</Modal>
 
 @code {
     private Toast _toast = default!;

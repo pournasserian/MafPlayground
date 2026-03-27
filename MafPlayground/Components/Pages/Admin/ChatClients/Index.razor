@@ -7,16 +7,16 @@
 <ConfirmDeleteModal @ref="_deleteModal" EntityName="@_deleteTargetName" OnConfirm="ExecuteDelete" />
 
 <!-- Page Header -->
-<AppPageHeader Title="Chat Clients" Subtitle="Manage AI provider client configurations">
+<PageHeader Title="Chat Clients" Subtitle="Manage AI provider client configurations">
     <ActionContent>
-        <AppButton Variant="primary" Icon="plus" CssClass="w-full sm:w-auto" OnClick="OpenCreateModal">
+        <Button Variant="primary" Icon="plus" CssClass="w-full sm:w-auto" OnClick="OpenCreateModal">
             New Client
-        </AppButton>
+        </Button>
     </ActionContent>
-</AppPageHeader>
+</PageHeader>
 
 <!-- Table -->
-<AppDataTable IsLoading="_isLoading"
+<DataTable IsLoading="_isLoading"
               IsEmpty="@(_clients.Count == 0)"
               EmptyTitle="No chat clients found."
               EmptySubtitle='Click "New Client" to create one.'>
@@ -39,21 +39,21 @@
                 <td class="max-w-xs truncate opacity-70">@client.Description</td>
                 <td>
                     <div class="flex gap-1">
-                        <AppButton Variant="ghost" Size="xs" Icon="view" Title="View"
+                        <Button Variant="ghost" Size="xs" Icon="view" Title="View"
                                    OnClick="() => OpenDetailModal(client)" />
-                        <AppButton Variant="ghost" Size="xs" Icon="edit" Title="Edit"
+                        <Button Variant="ghost" Size="xs" Icon="edit" Title="Edit"
                                    OnClick="() => OpenEditModal(client)" />
-                        <AppButton Variant="ghost" Size="xs" Icon="delete" Title="Delete"
+                        <Button Variant="ghost" Size="xs" Icon="delete" Title="Delete"
                                    CssClass="text-error" OnClick="() => OpenDeleteModal(client)" />
                     </div>
                 </td>
             </tr>
         }
     </BodyContent>
-</AppDataTable>
+</DataTable>
 
 <!-- Detail Modal -->
-<AppModal IsOpen="_isDetailModalOpen"
+<Modal IsOpen="_isDetailModalOpen"
           Title="@(_selectedClient?.Id ?? "")"
           Subtitle="@_selectedClient?.Description"
           OnClose="CloseDetailModal">
@@ -61,42 +61,42 @@
         @if (_selectedClient is not null)
         {
             <!-- Configuration Section -->
-            <AppDetailSection Title="Configuration" GridCols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                <AppDetailField Label="Id" Value="@_selectedClient.Id" Mono="true" />
-                <AppDetailField Label="Provider" Value="@_selectedClient.Provider" />
-                <AppDetailField Label="Model" Value="@_selectedClient.Model" Mono="true" />
-                <AppDetailField Label="Endpoint" Value="@_selectedClient.Endpoint" Mono="true" />
-                <AppDetailField Label="Organization Id" Value="@_selectedClient.OrganizationId" />
-                <AppDetailField Label="Project Id" Value="@_selectedClient.ProjectId" />
-            </AppDetailSection>
+            <DetailSection Title="Configuration" GridCols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                <DetailField Label="Id" Value="@_selectedClient.Id" Mono="true" />
+                <DetailField Label="Provider" Value="@_selectedClient.Provider" />
+                <DetailField Label="Model" Value="@_selectedClient.Model" Mono="true" />
+                <DetailField Label="Endpoint" Value="@_selectedClient.Endpoint" Mono="true" />
+                <DetailField Label="Organization Id" Value="@_selectedClient.OrganizationId" />
+                <DetailField Label="Project Id" Value="@_selectedClient.ProjectId" />
+            </DetailSection>
 
             <!-- Connection & Retry Section -->
-            <AppDetailSection Title="Connection &amp; Retry" ShowDivider="true"
+            <DetailSection Title="Connection &amp; Retry" ShowDivider="true"
                               GridCols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                <AppDetailField Label="Max Retries" Value="@_selectedClient.MaxRetries?.ToString()" />
-                <AppDetailField Label="Network Timeout (s)" Value="@(_selectedClient.NetworkTimeout.HasValue ? ((int)_selectedClient.NetworkTimeout.Value.TotalSeconds).ToString() : null)" />
-                <AppDetailField Label="Enable Distributed Tracing" Value="@_selectedClient.EnableDistributedTracing?.ToString()" />
-            </AppDetailSection>
+                <DetailField Label="Max Retries" Value="@_selectedClient.MaxRetries?.ToString()" />
+                <DetailField Label="Network Timeout (s)" Value="@(_selectedClient.NetworkTimeout.HasValue ? ((int)_selectedClient.NetworkTimeout.Value.TotalSeconds).ToString() : null)" />
+                <DetailField Label="Enable Distributed Tracing" Value="@_selectedClient.EnableDistributedTracing?.ToString()" />
+            </DetailSection>
 
             @if (!string.IsNullOrWhiteSpace(_selectedClient.Description))
             {
-                <AppDetailSection Title="Description" ShowDivider="true" GridCols="">
-                    <AppDetailField Label="Description" Value="@_selectedClient.Description" />
-                </AppDetailSection>
+                <DetailSection Title="Description" ShowDivider="true" GridCols="">
+                    <DetailField Label="Description" Value="@_selectedClient.Description" />
+                </DetailSection>
             }
         }
     </ChildContent>
     <FooterContent>
-        <AppButton Variant="ghost" OnClick="CloseDetailModal">Close</AppButton>
-        <AppButton Variant="primary" Icon="edit"
+        <Button Variant="ghost" OnClick="CloseDetailModal">Close</Button>
+        <Button Variant="primary" Icon="edit"
                    OnClick="() => { CloseDetailModal(); OpenEditModal(_selectedClient!); }">
             Edit
-        </AppButton>
+        </Button>
     </FooterContent>
-</AppModal>
+</Modal>
 
 <!-- Create / Edit Modal -->
-<AppModal IsOpen="_isModalOpen"
+<Modal IsOpen="_isModalOpen"
           Title="@(_isEditMode ? "Edit Chat Client" : "New Chat Client")"
           MaxWidth="max-w-2xl"
           ShowCloseButton="false"
@@ -107,72 +107,72 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Id -->
-                <AppFormField Label="Id" Required="true">
+                <FormField Label="Id" Required="true">
                     <InputText class="input input-bordered" @bind-Value="_form.Id" disabled="@_isEditMode" placeholder="e.g. Default" />
                     <ValidationMessage For="() => _form.Id" class="text-error text-xs mt-1" />
-                </AppFormField>
+                </FormField>
 
                 <!-- Provider -->
-                <AppFormField Label="Provider" Required="true">
+                <FormField Label="Provider" Required="true">
                     <InputText class="input input-bordered" @bind-Value="_form.Provider" placeholder="e.g. OpenAI" />
                     <ValidationMessage For="() => _form.Provider" class="text-error text-xs mt-1" />
-                </AppFormField>
+                </FormField>
 
                 <!-- Model -->
-                <AppFormField Label="Model">
+                <FormField Label="Model">
                     <InputText class="input input-bordered" @bind-Value="_form.Model" placeholder="openai/gpt-4o-mini" />
-                </AppFormField>
+                </FormField>
 
                 <!-- Endpoint -->
-                <AppFormField Label="Endpoint">
+                <FormField Label="Endpoint">
                     <InputText class="input input-bordered" @bind-Value="_form.Endpoint" placeholder="https://openrouter.ai/api/v1" />
-                </AppFormField>
+                </FormField>
 
                 <!-- OrganizationId -->
-                <AppFormField Label="Organization Id">
+                <FormField Label="Organization Id">
                     <InputText class="input input-bordered" @bind-Value="_form.OrganizationId" />
-                </AppFormField>
+                </FormField>
 
                 <!-- ProjectId -->
-                <AppFormField Label="Project Id">
+                <FormField Label="Project Id">
                     <InputText class="input input-bordered" @bind-Value="_form.ProjectId" />
-                </AppFormField>
+                </FormField>
 
                 <!-- MaxRetries -->
-                <AppFormField Label="Max Retries">
+                <FormField Label="Max Retries">
                     <InputNumber class="input input-bordered" @bind-Value="_form.MaxRetries" placeholder="3" />
                     <ValidationMessage For="() => _form.MaxRetries" class="text-error text-xs mt-1" />
-                </AppFormField>
+                </FormField>
 
                 <!-- NetworkTimeout (seconds) -->
-                <AppFormField Label="Network Timeout (seconds)">
+                <FormField Label="Network Timeout (seconds)">
                     <input type="number" class="input input-bordered" min="0"
                            value="@_networkTimeoutSeconds"
                            @onchange="e => _networkTimeoutSeconds = e.Value is not null ? int.TryParse(e.Value.ToString(), out var v) ? v : (int?)null : null"
                            placeholder="30" />
-                </AppFormField>
+                </FormField>
 
                 <!-- EnableDistributedTracing -->
-                <AppFormField Label="Enable Distributed Tracing">
-                    <AppNullableBoolSelect Value="_form.EnableDistributedTracing"
+                <FormField Label="Enable Distributed Tracing">
+                    <NullableBoolSelect Value="_form.EnableDistributedTracing"
                                            ValueChanged="v => _form.EnableDistributedTracing = v" />
-                </AppFormField>
+                </FormField>
 
                 <!-- Description (full width) -->
-                <AppFormField Label="Description" ColSpan="md:col-span-2">
+                <FormField Label="Description" ColSpan="md:col-span-2">
                     <InputTextArea class="textarea textarea-bordered" rows="2" @bind-Value="_form.Description" />
-                </AppFormField>
+                </FormField>
             </div>
 
             <div class="modal-action mt-6">
-                <AppButton Type="button" Variant="ghost" Disabled="_isSaving" OnClick="CloseModal">Cancel</AppButton>
-                <AppButton Type="submit" Variant="primary" IsLoading="_isSaving" Disabled="_isSaving">
+                <Button Type="button" Variant="ghost" Disabled="_isSaving" OnClick="CloseModal">Cancel</Button>
+                <Button Type="submit" Variant="primary" IsLoading="_isSaving" Disabled="_isSaving">
                     @(_isEditMode ? "Save Changes" : "Create")
-                </AppButton>
+                </Button>
             </div>
         </EditForm>
     </ChildContent>
-</AppModal>
+</Modal>
 
 @code {
     private Toast _toast = default!;
