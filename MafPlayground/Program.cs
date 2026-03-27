@@ -11,8 +11,12 @@ services.AddRazorComponents()
 
 services.AddSingleton<IChatClientFactory, ChatClientFactory>();
 services.AddSingleton<IChatAgentFactory, ChatAgentFactory>();
+
 services.AddSingleton<IChatClientRepository, JsonChatClientRepository>();
+services.AddSingleton<IChatAgentRepository, JsonChatAgentRepository>();
+
 services.AddTransient<IChatClientService, ChatClientService>();
+services.AddTransient<IChatAgentService, ChatAgentService>();
 
 var app = builder.Build();
 

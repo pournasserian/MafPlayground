@@ -12,7 +12,7 @@ public interface IChatClientService
     Task<ChatClient> Delete(string id, CancellationToken cancellationToken = default);
 }
 
-public class ChatClientService(IChatClientRepository repository) : IChatClientService
+internal class ChatClientService(IChatClientRepository repository) : IChatClientService
 {
     public Task<IEnumerable<ChatClient>> GetAll(CancellationToken cancellationToken = default)
     {

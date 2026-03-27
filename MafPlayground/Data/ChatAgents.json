@@ -1,0 +1,31 @@
+﻿[
+  {
+    "Id": "Default",
+    "Name": "HelperBot",
+    "Description": "A helpful assistant that can answer questions and perform tasks.",
+    "ConversationId": null,
+    "Instructions": null,
+    "Temperature": null,
+    "MaxOutputTokens": null,
+    "TopP": null,
+    "TopK": null,
+    "FrequencyPenalty": null,
+    "PresencePenalty": null,
+    "Seed": null,
+    "Reasoning": null,
+    "ResponseFormat": null,
+    "ModelId": null,
+    "StopSequences": null,
+    "AllowMultipleToolCalls": null,
+    "ToolMode": null,
+    "allowBackgroundResponses": null,
+    "continuationToken": null,
+    "AdditionalProperties": null,
+    "ChatHistoryProvider": null,
+    "AIContextProviders": null,
+    "UseProvidedChatClientAsIs": false,
+    "ClearOnChatHistoryProviderConflict": true,
+    "WarnOnChatHistoryProviderConflict": true,
+    "ThrowOnChatHistoryProviderConflict": true
+  }
+]

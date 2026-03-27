@@ -3,6 +3,8 @@
 @inject IChatClientFactory ChatClientFactory
 @inject IConfiguration Configuration
 @inject IChatClientService ChatClientService
+@inject IChatAgentService ChatAgentService
+
 <PageTitle>Home</PageTitle>
 
 <h1>Hello, world!</h1>
@@ -18,8 +20,11 @@ Welcome to your new app.
         var clientOptions = await ChatClientService.Get("Default") ??
             throw new Exception("Chat client configuration not found. Please ensure it is set up correctly.");
 
+        var agentOptions = await ChatAgentService.Get("Default") ??
+            throw new Exception("Chat agent configuration not found. Please ensure it is set up correctly.");
+
         var chatClient = ChatClientFactory.CreateInstance(apiKey, clientOptions);
-        var agent = ChatAgentFactory.CreateAgent(chatClient);
+        var agent = ChatAgentFactory.CreateInstance(chatClient, agentOptions);
         await base.OnInitializedAsync();
     }
 }

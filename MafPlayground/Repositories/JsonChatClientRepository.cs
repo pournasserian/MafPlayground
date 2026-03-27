@@ -5,8 +5,9 @@ namespace MafPlayground.Repositories;
 
 internal class JsonChatClientRepository : IChatClientRepository
 {
-    private readonly string _filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data", "chatclients.json");
-    
+    private readonly static string _filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data", "chatclients.json");
+    private readonly static JsonSerializerOptions _jsonSerializerOptions = new() { WriteIndented = true };
+
     public async Task<ChatClient?> Get(string id, CancellationToken cancellationToken = default)
     {
         var clients = await GetAll(cancellationToken);
@@ -58,7 +59,7 @@ internal class JsonChatClientRepository : IChatClientRepository
     }
     private async Task SaveAll(List<ChatClient> clients, CancellationToken cancellationToken = default)
     {
-        var json = JsonSerializer.Serialize(clients, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(clients, _jsonSerializerOptions);
         await File.WriteAllTextAsync(_filePath, json, cancellationToken);
     }
 }
