@@ -1,0 +1,19 @@
+<select class="select select-bordered @CssClass"
+        value="@ToString(Value)"
+        @onchange="e => ValueChanged.InvokeAsync(Parse(e.Value?.ToString()))">
+    <option value="">@UnsetLabel</option>
+    <option value="true">@TrueLabel</option>
+    <option value="false">@FalseLabel</option>
+</select>
+
+@code {
+    [Parameter] public bool? Value                          { get; set; }
+    [Parameter] public EventCallback<bool?> ValueChanged    { get; set; }
+    [Parameter] public string UnsetLabel                    { get; set; } = "— Unset —";
+    [Parameter] public string TrueLabel                     { get; set; } = "True";
+    [Parameter] public string FalseLabel                    { get; set; } = "False";
+    [Parameter] public string CssClass                      { get; set; } = string.Empty;
+
+    private static string ToString(bool? v) => v switch { true => "true", false => "false", _ => "" };
+    private static bool? Parse(string? v)   => v switch { "true" => true, "false" => false, _ => null };
+}

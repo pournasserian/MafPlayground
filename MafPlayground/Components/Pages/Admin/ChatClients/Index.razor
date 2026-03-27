@@ -7,252 +7,172 @@
 <ConfirmDeleteModal @ref="_deleteModal" EntityName="@_deleteTargetName" OnConfirm="ExecuteDelete" />
 
 <!-- Page Header -->
-<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-    <div>
-        <h1 class="text-2xl font-bold">Chat Clients</h1>
-        <p class="text-sm opacity-60 mt-1">Manage AI provider client configurations</p>
-    </div>
-    <button class="btn btn-primary w-full sm:w-auto" @onclick="OpenCreateModal">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        New Client
-    </button>
-</div>
+<AppPageHeader Title="Chat Clients" Subtitle="Manage AI provider client configurations">
+    <ActionContent>
+        <AppButton Variant="primary" Icon="plus" CssClass="w-full sm:w-auto" OnClick="OpenCreateModal">
+            New Client
+        </AppButton>
+    </ActionContent>
+</AppPageHeader>
 
 <!-- Table -->
-<div class="card bg-base-100 shadow-sm">
-    <div class="card-body p-0">
-        @if (_isLoading)
+<AppDataTable IsLoading="_isLoading"
+              IsEmpty="@(_clients.Count == 0)"
+              EmptyTitle="No chat clients found."
+              EmptySubtitle='Click "New Client" to create one.'>
+    <HeaderContent>
+        <tr>
+            <th>Id</th>
+            <th>Provider</th>
+            <th>Model</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </HeaderContent>
+    <BodyContent>
+        @foreach (var client in _clients)
         {
-            <div class="flex justify-center items-center py-16">
-                <span class="loading loading-spinner loading-lg"></span>
-            </div>
+            <tr>
+                <td class="font-mono font-semibold">@client.Id</td>
+                <td>@client.Provider</td>
+                <td class="font-mono text-sm">@client.Model</td>
+                <td class="max-w-xs truncate opacity-70">@client.Description</td>
+                <td>
+                    <div class="flex gap-1">
+                        <AppButton Variant="ghost" Size="xs" Icon="view" Title="View"
+                                   OnClick="() => OpenDetailModal(client)" />
+                        <AppButton Variant="ghost" Size="xs" Icon="edit" Title="Edit"
+                                   OnClick="() => OpenEditModal(client)" />
+                        <AppButton Variant="ghost" Size="xs" Icon="delete" Title="Delete"
+                                   CssClass="text-error" OnClick="() => OpenDeleteModal(client)" />
+                    </div>
+                </td>
+            </tr>
         }
-        else if (_clients.Count == 0)
-        {
-            <div class="text-center py-16 opacity-50">
-                <p class="text-lg">No chat clients found.</p>
-                <p class="text-sm mt-1">Click "New Client" to create one.</p>
-            </div>
-        }
-        else
-        {
-            <div class="overflow-x-auto">
-                <table class="table table-zebra">
-                    <thead>
-                        <tr>
-                            <th>Id</th>
-                            <th>Provider</th>
-                            <th>Model</th>
-                            <th>Description</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var client in _clients)
-                        {
-                            <tr>
-                                <td class="font-mono font-semibold">@client.Id</td>
-                                <td>@client.Provider</td>
-                                <td class="font-mono text-sm">@client.Model</td>
-                                <td class="max-w-xs truncate opacity-70">@client.Description</td>
-                                <td>
-                                    <div class="flex gap-1">
-                                        <button class="btn btn-xs btn-ghost" title="View" @onclick="() => OpenDetailModal(client)">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                        </button>
-                                        <button class="btn btn-xs btn-ghost" title="Edit" @onclick="() => OpenEditModal(client)">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
-                                        </button>
-                                        <button class="btn btn-xs btn-ghost text-error" title="Delete" @onclick="() => OpenDeleteModal(client)">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-    </div>
-</div>
+    </BodyContent>
+</AppDataTable>
 
 <!-- Detail Modal -->
-<dialog class="modal @(_isDetailModalOpen ? "modal-open" : "")">
-    <div class="modal-box w-11/12 max-w-3xl max-h-[90vh] overflow-y-auto">
+<AppModal IsOpen="_isDetailModalOpen"
+          Title="@(_selectedClient?.Id ?? "")"
+          Subtitle="@_selectedClient?.Description"
+          OnClose="CloseDetailModal">
+    <ChildContent>
         @if (_selectedClient is not null)
         {
-            <div class="flex items-start justify-between mb-4">
-                <div>
-                    <h3 class="font-bold text-lg font-mono">@_selectedClient.Id</h3>
-                    @if (!string.IsNullOrEmpty(_selectedClient.Description))
-                    {
-                        <p class="text-sm opacity-60 mt-0.5">@_selectedClient.Description</p>
-                    }
-                </div>
-                <button class="btn btn-sm btn-ghost btn-circle" @onclick="CloseDetailModal" title="Close">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-
             <!-- Configuration Section -->
-            <div class="mb-5">
-                <h4 class="text-xs uppercase tracking-widest opacity-50 font-semibold mb-3">Configuration</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    @DetailField("Id", _selectedClient.Id, mono: true)
-                    @DetailField("Provider", _selectedClient.Provider)
-                    @DetailField("Model", _selectedClient.Model, mono: true)
-                    @DetailField("Endpoint", _selectedClient.Endpoint, mono: true)
-                    @DetailField("Organization Id", _selectedClient.OrganizationId)
-                    @DetailField("Project Id", _selectedClient.ProjectId)
-                </div>
-            </div>
+            <AppDetailSection Title="Configuration" GridCols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                <AppDetailField Label="Id" Value="@_selectedClient.Id" Mono="true" />
+                <AppDetailField Label="Provider" Value="@_selectedClient.Provider" />
+                <AppDetailField Label="Model" Value="@_selectedClient.Model" Mono="true" />
+                <AppDetailField Label="Endpoint" Value="@_selectedClient.Endpoint" Mono="true" />
+                <AppDetailField Label="Organization Id" Value="@_selectedClient.OrganizationId" />
+                <AppDetailField Label="Project Id" Value="@_selectedClient.ProjectId" />
+            </AppDetailSection>
 
-            <div class="divider my-2"></div>
-
-            <!-- Connection Section -->
-            <div class="mb-5">
-                <h4 class="text-xs uppercase tracking-widest opacity-50 font-semibold mb-3">Connection &amp; Retry</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    @DetailField("Max Retries", _selectedClient.MaxRetries?.ToString())
-                    @DetailField("Network Timeout (s)", _selectedClient.NetworkTimeout.HasValue ? ((int)_selectedClient.NetworkTimeout.Value.TotalSeconds).ToString() : null)
-                    @DetailField("Enable Distributed Tracing", _selectedClient.EnableDistributedTracing?.ToString())
-                </div>
-            </div>
+            <!-- Connection & Retry Section -->
+            <AppDetailSection Title="Connection &amp; Retry" ShowDivider="true"
+                              GridCols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                <AppDetailField Label="Max Retries" Value="@_selectedClient.MaxRetries?.ToString()" />
+                <AppDetailField Label="Network Timeout (s)" Value="@(_selectedClient.NetworkTimeout.HasValue ? ((int)_selectedClient.NetworkTimeout.Value.TotalSeconds).ToString() : null)" />
+                <AppDetailField Label="Enable Distributed Tracing" Value="@_selectedClient.EnableDistributedTracing?.ToString()" />
+            </AppDetailSection>
 
             @if (!string.IsNullOrWhiteSpace(_selectedClient.Description))
             {
-                <div class="divider my-2"></div>
-                <div class="mb-2">
-                    <h4 class="text-xs uppercase tracking-widest opacity-50 font-semibold mb-3">Description</h4>
-                    @DetailField("Description", _selectedClient.Description)
-                </div>
+                <AppDetailSection Title="Description" ShowDivider="true" GridCols="">
+                    <AppDetailField Label="Description" Value="@_selectedClient.Description" />
+                </AppDetailSection>
             }
-
-            <div class="modal-action mt-4">
-                <button class="btn btn-ghost" @onclick="CloseDetailModal">Close</button>
-                <button class="btn btn-primary" @onclick="() => { CloseDetailModal(); OpenEditModal(_selectedClient); }">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Edit
-                </button>
-            </div>
         }
-    </div>
-    <form method="dialog" class="modal-backdrop">
-        <button type="button" @onclick="CloseDetailModal">close</button>
-    </form>
-</dialog>
+    </ChildContent>
+    <FooterContent>
+        <AppButton Variant="ghost" OnClick="CloseDetailModal">Close</AppButton>
+        <AppButton Variant="primary" Icon="edit"
+                   OnClick="() => { CloseDetailModal(); OpenEditModal(_selectedClient!); }">
+            Edit
+        </AppButton>
+    </FooterContent>
+</AppModal>
 
 <!-- Create / Edit Modal -->
-<dialog class="modal @(_isModalOpen ? "modal-open" : "")">
-    <div class="modal-box w-11/12 max-w-2xl max-h-[90vh] overflow-y-auto">
-        <h3 class="font-bold text-lg mb-4">@(_isEditMode ? "Edit Chat Client" : "New Chat Client")</h3>
-
+<AppModal IsOpen="_isModalOpen"
+          Title="@(_isEditMode ? "Edit Chat Client" : "New Chat Client")"
+          MaxWidth="max-w-2xl"
+          ShowCloseButton="false"
+          OnClose="CloseModal">
+    <ChildContent>
         <EditForm Model="_form" OnValidSubmit="SaveClient">
             <DataAnnotationsValidator />
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Id -->
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-medium">Id <span class="text-error">*</span></span></label>
+                <AppFormField Label="Id" Required="true">
                     <InputText class="input input-bordered" @bind-Value="_form.Id" disabled="@_isEditMode" placeholder="e.g. Default" />
                     <ValidationMessage For="() => _form.Id" class="text-error text-xs mt-1" />
-                </div>
+                </AppFormField>
 
                 <!-- Provider -->
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-medium">Provider <span class="text-error">*</span></span></label>
+                <AppFormField Label="Provider" Required="true">
                     <InputText class="input input-bordered" @bind-Value="_form.Provider" placeholder="e.g. OpenAI" />
                     <ValidationMessage For="() => _form.Provider" class="text-error text-xs mt-1" />
-                </div>
+                </AppFormField>
 
                 <!-- Model -->
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-medium">Model</span></label>
+                <AppFormField Label="Model">
                     <InputText class="input input-bordered" @bind-Value="_form.Model" placeholder="openai/gpt-4o-mini" />
-                </div>
+                </AppFormField>
 
                 <!-- Endpoint -->
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-medium">Endpoint</span></label>
+                <AppFormField Label="Endpoint">
                     <InputText class="input input-bordered" @bind-Value="_form.Endpoint" placeholder="https://openrouter.ai/api/v1" />
-                </div>
+                </AppFormField>
 
                 <!-- OrganizationId -->
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-medium">Organization Id</span></label>
+                <AppFormField Label="Organization Id">
                     <InputText class="input input-bordered" @bind-Value="_form.OrganizationId" />
-                </div>
+                </AppFormField>
 
                 <!-- ProjectId -->
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-medium">Project Id</span></label>
+                <AppFormField Label="Project Id">
                     <InputText class="input input-bordered" @bind-Value="_form.ProjectId" />
-                </div>
+                </AppFormField>
 
                 <!-- MaxRetries -->
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-medium">Max Retries</span></label>
+                <AppFormField Label="Max Retries">
                     <InputNumber class="input input-bordered" @bind-Value="_form.MaxRetries" placeholder="3" />
                     <ValidationMessage For="() => _form.MaxRetries" class="text-error text-xs mt-1" />
-                </div>
+                </AppFormField>
 
                 <!-- NetworkTimeout (seconds) -->
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-medium">Network Timeout (seconds)</span></label>
+                <AppFormField Label="Network Timeout (seconds)">
                     <input type="number" class="input input-bordered" min="0"
                            value="@_networkTimeoutSeconds"
                            @onchange="e => _networkTimeoutSeconds = e.Value is not null ? int.TryParse(e.Value.ToString(), out var v) ? v : (int?)null : null"
                            placeholder="30" />
-                </div>
+                </AppFormField>
 
                 <!-- EnableDistributedTracing -->
-                <div class="form-control">
-                    <label class="label"><span class="label-text font-medium">Enable Distributed Tracing</span></label>
-                    <select class="select select-bordered" value="@NullableBoolToString(_form.EnableDistributedTracing)"
-                            @onchange="e => _form.EnableDistributedTracing = StringToNullableBool(e.Value?.ToString())">
-                        <option value="">— Unset —</option>
-                        <option value="true">True</option>
-                        <option value="false">False</option>
-                    </select>
-                </div>
+                <AppFormField Label="Enable Distributed Tracing">
+                    <AppNullableBoolSelect Value="_form.EnableDistributedTracing"
+                                           ValueChanged="v => _form.EnableDistributedTracing = v" />
+                </AppFormField>
 
                 <!-- Description (full width) -->
-                <div class="form-control md:col-span-2">
-                    <label class="label"><span class="label-text font-medium">Description</span></label>
+                <AppFormField Label="Description" ColSpan="md:col-span-2">
                     <InputTextArea class="textarea textarea-bordered" rows="2" @bind-Value="_form.Description" />
-                </div>
+                </AppFormField>
             </div>
 
             <div class="modal-action mt-6">
-                <button type="button" class="btn btn-ghost" @onclick="CloseModal" disabled="@_isSaving">Cancel</button>
-                <button type="submit" class="btn btn-primary" disabled="@_isSaving">
-                    @if (_isSaving)
-                    {
-                        <span class="loading loading-spinner loading-sm"></span>
-                    }
+                <AppButton Type="button" Variant="ghost" Disabled="_isSaving" OnClick="CloseModal">Cancel</AppButton>
+                <AppButton Type="submit" Variant="primary" IsLoading="_isSaving" Disabled="_isSaving">
                     @(_isEditMode ? "Save Changes" : "Create")
-                </button>
+                </AppButton>
             </div>
         </EditForm>
-    </div>
-    <form method="dialog" class="modal-backdrop">
-        <button type="button" @onclick="CloseModal">close</button>
-    </form>
-</dialog>
+    </ChildContent>
+</AppModal>
 
 @code {
     private Toast _toast = default!;
@@ -392,33 +312,4 @@
             _toast.Show($"Error: {ex.Message}", Toast.ToastType.Error);
         }
     }
-
-    private static RenderFragment DetailField(string label, string? value, bool mono = false) => __builder =>
-    {
-        __builder.OpenElement(0, "div");
-        __builder.AddAttribute(1, "class", "flex flex-col gap-1");
-        __builder.OpenElement(2, "span");
-        __builder.AddAttribute(3, "class", "text-xs uppercase tracking-wide opacity-50 font-medium");
-        __builder.AddContent(4, label);
-        __builder.CloseElement();
-        __builder.OpenElement(5, "span");
-        __builder.AddAttribute(6, "class", $"text-sm {(mono ? "font-mono" : "")}");
-        __builder.AddContent(7, string.IsNullOrEmpty(value) ? "—" : value);
-        __builder.CloseElement();
-        __builder.CloseElement();
-    };
-
-    private static string NullableBoolToString(bool? value) => value switch
-    {
-        true => "true",
-        false => "false",
-        _ => ""
-    };
-
-    private static bool? StringToNullableBool(string? value) => value switch
-    {
-        "true" => true,
-        "false" => false,
-        _ => null
-    };
 }

@@ -1,0 +1,25 @@
+<div class="form-control @ColSpan @CssClass">
+    <label class="label">
+        <span class="label-text font-medium">
+            @Label
+            @if (Required)
+            {
+                <span class="text-error"> *</span>
+            }
+            @if (!string.IsNullOrEmpty(Hint))
+            {
+                <span class="opacity-50 text-xs"> @Hint</span>
+            }
+        </span>
+    </label>
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string Label              { get; set; } = string.Empty;
+    [Parameter] public bool Required             { get; set; }
+    [Parameter] public string? Hint             { get; set; }
+    [Parameter] public string ColSpan           { get; set; } = string.Empty;
+    [Parameter] public string CssClass          { get; set; } = string.Empty;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}
