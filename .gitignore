@@ -11,6 +11,10 @@
 *.sln.docstates
 *.env
 
+# ASP.NET Core sensitive configuration overrides (contain secrets/API keys)
+**/appsettings.Development.json
+**/appsettings.*.Local.json
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
