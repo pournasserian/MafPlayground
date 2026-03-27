@@ -30,7 +30,8 @@ internal class JsonChatClientRepository : IChatClientRepository
             await SaveAll(clients, cancellationToken);
             return chatClient;
         }
-        else { 
+        else
+        {
             throw new KeyNotFoundException($"ChatClient with Id {chatClient.Id} not found.");
         }
     }
